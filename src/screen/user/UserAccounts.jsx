@@ -1,11 +1,11 @@
 import { Box, Button, Stack, Typography, useMediaQuery } from "@mui/material";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   useArchiveUserMutation,
   useImportUserMutation,
   useUserResetMutation,
-  useUsersQuery,usePendingUsersQuery
+  useUsersQuery,
 } from "../../services/server/api/usersAPI";
 import useParamsHook from "../../services/hooks/useParamsHook";
 
@@ -43,11 +43,16 @@ import {
 } from "../../services/functions/reusableFunctions";
 import MenuOptions from "../../components/custom/MenuOptions";
 import { mapPayloadUserImport } from "../../services/functions/dataMapping";
+import UserCard from "../../components/pages/accounts/UserCard";
+
 
 const UserAccounts = () => {
+  const isLaptop = useMediaQuery("(min-width:1024px)");
+
   const dispatch = useDispatch();
   const [anchorEl, setAnchorEl] = useState(null);
   const [anchorE2, setAnchorE2] = useState(null);
+  const [allPosts, setAllPosts] = useState([]);
 
   const {
     params,
@@ -56,25 +61,9 @@ const UserAccounts = () => {
     onSearchData,
     onRowChange,
     onSelectPage,
-   } = useParamsHook(true);
-  const { data, isFetching, isError, isSuccess } = useUsersQuery(params, {
-    skip: params.status === "pending"
-  });
-  const { data: pendingData, isFetching: pendingFetching, isError: pendingError, isSuccess: pendingSuccess } = usePendingUsersQuery(params, {
-    skip: params.status !== "pending"
-  });
-  const list = pendingData?.result ?? []; // fallback to empty array
+  } = useParamsHook(true);
+  const { data, isFetching, isError, isSuccess } = useUsersQuery(params);
 
-  console.log(list)
-  const transformPending = {
-    ...list,
-    data: list?.data?.map((item) => ({
-      ...item,
-      fullname: `${item.first_name} ${item.suffix || ""} ${item.last_name}`,
-      fullIdNo: `${item.id_prefix}-${item.id_no}`,
-      status: "Pending"
-    })),
-  }  
   const { data: charging } = useOneChargingQuery({
     status: "active",
     pagination: "none",
@@ -90,6 +79,8 @@ const UserAccounts = () => {
   const reset = useSelector((state) => state.prompt.reset);
   const userData = useSelector((state) => state.modal.user);
   const importData = useSelector((state) => state.modal.importData);
+
+  const observer = useRef();
 
   const header = [
     {
@@ -113,20 +104,7 @@ const UserAccounts = () => {
       sixth: "location_name",
     },
   ];
- const pendingHeader = [
-    {
-      name: "Employee ID",
-      value: "fullIdNo"
-    },
-    {
-      name: "Full Name",
-      value: "fullname"
-    },
-    {
-      name: "Username",
-      value: "username"
-    },
-  ]
+
   const importHeader = [
     { name: "account_code", value: "User ID" },
     { name: "account_name", value: "Account Name" },
@@ -175,7 +153,7 @@ const UserAccounts = () => {
       await archiveUser(userData).unwrap();
       enqueueSnackbar(
         `User has been ${params?.status === "active" ? "archived" : "restored"}`,
-        { variant: "success" }
+        { variant: "success" },
       );
       dispatch(resetPrompt());
       dispatch(resetModal());
@@ -197,12 +175,34 @@ const UserAccounts = () => {
     }
   };
 
-  const isLaptop = useMediaQuery("(min-width:1024px)");
+  const lastPostRef = useCallback(
+    (node) => {
+      if (isFetching) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (
+          entries[0].isIntersecting &&
+          params?.page !== data?.result?.last_page
+        ) {
+          console.log(params?.page);
+          onPageChange(null, params?.page);
+        }
+      });
+      if (node) observer.current.observe(node);
+    },
+    [isFetching],
+  );
 
   const mapped = readExcelItems(importData, importHeader);
 
+  useEffect(() => {
+    if (data?.result?.data?.length) {
+      setAllPosts((prevPosts) => [...prevPosts, ...data?.result?.data]);
+    }
+  }, [data]);
+
   return (
-    <Box sx={{ marginLeft: 2 }}>
+    <Box sx={{ marginLeft: isLaptop ? 2 : 0 }}>
       <Stack gap={2}>
         <Stack
           flexDirection={"row"}
@@ -218,7 +218,7 @@ const UserAccounts = () => {
           >
             User Accounts
           </Typography>
-          {params?.status === "active" && (
+          {/* {params?.status === "active" && (
             <Button
               sx={{ textTransform: "capitalize" }}
               color="info"
@@ -234,40 +234,58 @@ const UserAccounts = () => {
             >
               Add
             </Button>
-          )}
+          )} */}
         </Stack>
         <Stack
           flexDirection={"row"}
           justifyContent={"space-between"}
           alignItems={"center"}
         >
-          <StatusFilter pending={true} params={params} onStatusChange={onStatusChange} />
+          <StatusFilter params={params} onStatusChange={onStatusChange} />
           <AppSearch onSearch={onSearchData} />
         </Stack>
 
-        {isFetching || pendingFetching ? (
-          <MobileLoading />
-        ) : isError || pendingError ? (
-          <NoDataFound />
+        {isLaptop ? (
+          isFetching ? (
+            <MobileLoading />
+          ) : isError ? (
+            <NoDataFound />
+          ) : (
+            <TableGrid
+              header={header}
+              items={data?.result}
+              onView={(v) => {
+                dispatch(setUser(v));
+                dispatch(setUserModal(true));
+              }}
+              onSelect={(e, i) => {
+                dispatch(setUser(i));
+                setAnchorEl({
+                  mouseX: e.clientX,
+                  mouseY: e.clientY,
+                });
+              }}
+            />
+          )
         ) : (
-          <TableGrid
-      header={params?.status !== "pending" ? header : pendingHeader}
-            items={params?.status !== "pending" ? data?.result : transformPending}
-            onView={(v) => {
-              dispatch(setUser(v));
-              dispatch(setUserModal(true));
-            }}
-            onSelect={(e, i) => {
-              dispatch(setUser(i));
-              setAnchorEl({
-                mouseX: e.clientX,
-                mouseY: e.clientY,
-              });
-            }}
-          />
+          <>
+            <UserCard
+              onSelect={(e, i) => {
+                dispatch(setUser(i));
+                setAnchorEl({
+                  mouseX: e.clientX,
+                  mouseY: e.clientY,
+                });
+              }}
+              ref={lastPostRef}
+              items={allPosts}
+              type={"user"}
+            />
+            {isFetching && <p>Loading more...</p>}
+          </>
         )}
       </Stack>
-      {(isSuccess || pendingSuccess) && (
+      {isSuccess && isLaptop && (
         <CustomPagination
           data={data?.result}
           onPageChange={onPageChange}
@@ -302,53 +320,30 @@ const UserAccounts = () => {
         params={params}
         anchorEl={anchorEl}
         setAnchorEl={setAnchorEl}
+        archive={() => {
+          setAnchorEl(null);
+          dispatch(setArchive(true));
+        }}
         add={() => {
-          console.log("test")
           setAnchorEl(null);
           dispatch(setUserModal(true));
         }}
-        {
-        ...(params.status !== "pending"
+        {...(params.status === "active"
           ? {
-            update: () => {
-              setAnchorEl(null);
-              dispatch(setUserModal(true));
+              update: () => {
+                setAnchorEl(null);
+                dispatch(setUserModal(true));
+              },
             }
-          }
-          : {})
-        }
-        {
-        ...(params.status !== "pending"
-          ? {
-            update: () => {
-              setAnchorEl(null);
-              dispatch(setUserModal(true));
-            }
-          }
-          : {})
-        }
-        {
-        ...(params.status !== "pending"
-          ? {
-            archive: () => {
-              setAnchorEl(null);
-              dispatch(setArchive(true));
-            }
-          }
-          : {})
-        }
-
-        {
-        ...(params.status !== "pending"
-          ? {
-            reset: () => {
-              setAnchorEl(null);
-              dispatch(setReset(true));
-            }
-          }
-
-          : {})
-        }
+          : {})}
+        // {...(params.status === "active"
+        //   ? {
+        //       reset: () => {
+        //         setAnchorEl(null);
+        //         dispatch(setReset(true));
+        //       },
+        //     }
+        //   : {})}
       />
 
       <AppPrompt

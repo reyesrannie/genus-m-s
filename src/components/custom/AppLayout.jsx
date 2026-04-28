@@ -63,20 +63,34 @@ const AppLayout = ({ child }) => {
 
   const fileredNavigation = filterNavigationByAccess(
     navigation,
-    userData?.role?.access_permission
+    userData?.role?.access_permission,
   );
 
   const [logout, { isLoading }] = useLogoutMutation();
 
   const logoutHandler = async () => {
-    try {
-      const res = await logout().unwrap();
-    } catch (error) {}
-    sessionStorage.clear("genusETD");
+    sessionStorage.removeItem("genusM&S");
     dispatch(resetAuth());
     dispatch(resetDrawer());
     dispatch(resetTheme());
-    window.location.reload();
+    navigate("/");
+
+    const oneRdfWindow = window.open("", "OneRDF_Portal");
+
+    try {
+      if (
+        oneRdfWindow.location.href === "about:blank" ||
+        oneRdfWindow.location.href === ""
+      ) {
+        oneRdfWindow.close();
+        window.name = "OneRDF_Portal";
+        window.location.href = "https://one.rdfmis.com/login";
+      } else {
+        window.close();
+      }
+    } catch (error) {
+      window.close();
+    }
   };
 
   const searchParams = new URLSearchParams(location.search);
@@ -152,7 +166,7 @@ const AppLayout = ({ child }) => {
               {mode === "light" ? "Dark Mode" : "Light Mode"}
             </ListItemText>
           </MenuItem>
-          <MenuItem
+          {/* <MenuItem
             onClick={() => dispatch(setChangePass(true))}
             disabled={isLoading}
           >
@@ -160,7 +174,7 @@ const AppLayout = ({ child }) => {
               <VpnKeyOutlinedIcon />
             </ListItemIcon>
             <ListItemText>Change Password</ListItemText>
-          </MenuItem>
+          </MenuItem> */}
           <MenuItem onClick={logoutHandler} disabled={isLoading}>
             <ListItemIcon>
               <PowerSettingsNewOutlinedIcon />

@@ -1,14 +1,13 @@
 import { useState } from "react";
 
-const useParamsHook = (pending) => {
+const useParamsHook = () => {
   const [params, setParams] = useState({
-    status: pending ? "pending" :"active",
-    page: 1,
+    status: "active",
     page: 1,
     per_page: 10,
-    pagination: null,
-    sorts: null,
-    search: "",
+    pagination: undefined,
+    sorts: undefined,
+    search: undefined,
   });
 
   const onPageChange = (_, page) => {
@@ -81,8 +80,8 @@ const useParamsHook = (pending) => {
       status: "active",
       page: 1,
       per_page: 10,
-      pagination: null,
-      sorts: null,
+      pagination: undefined,
+      sorts: undefined,
       search: "",
     }));
   };

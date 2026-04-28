@@ -10,6 +10,7 @@ const userRoles = [
     child: [
       { name: "User", value: "user" },
       { name: "Roles", value: "roles" },
+      { name: "Pending Users", value: "pending" },
     ],
   },
   {

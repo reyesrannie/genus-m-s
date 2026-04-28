@@ -122,13 +122,16 @@ const UserModal = () => {
   const submitHandler = async (submitData) => {
     const payload = {
       ...mapPayloadUser(submitData),
-      id: (userData !== null && userData?.status !== "Pending") ? userData?.id : null,
-      for_syncing: (userData?.status === "Pending" && true)
+      id:
+        userData !== null && userData?.status !== "Pending"
+          ? userData?.id
+          : null,
+      for_syncing: userData?.status === "Pending" && true,
     };
 
     try {
       const res =
-        (userData === null || userData?.status === "Pending")
+        userData === null || userData?.status === "Pending"
           ? await createUser(payload).unwrap()
           : await updateUser(payload).unwrap();
       enqueueSnackbar(res?.message, { variant: "success" });
@@ -143,19 +146,19 @@ const UserModal = () => {
     if (hasRun) return;
     const mapUser = {
       account_code: sedarData?.data?.find(
-        (item) => item?.general_info?.full_id_number === userData?.account_code
+        (item) => item?.general_info?.full_id_number === userData?.account_code,
       ),
       account_name: userData?.account_name,
       mobile_no: userData?.mobile_no,
       username: userData?.username,
       role_id: rolesData?.find((item) => item?.id === userData?.role_id),
       charging: chargingData?.find(
-        (item) => item?.sync_id === userData?.charging_id?.toString()
+        (item) => item?.sync_id === userData?.charging_id?.toString(),
       ),
       scope_order: userData?.customer?.map((item) =>
         chargingData?.find(
-          (chargingItem) => chargingItem?.code === item?.charging_code
-        )
+          (chargingItem) => chargingItem?.code === item?.charging_code,
+        ),
       ),
     };
 
@@ -168,16 +171,18 @@ const UserModal = () => {
     if (hasRun) return;
     const mapUser = {
       account_code: sedarData?.data?.find(
-        (item) => item?.general_info?.full_id_number === userData?.fullIdNo
+        (item) =>
+          item?.general_info?.full_id_number ===
+          `${userData?.id_prefix}-${userData?.id_no}`,
       ),
-      account_name: userData?.fullname,
+      account_name: `${userData?.first_name} ${userData?.last_name}`,
       username: userData?.username,
     };
     Object.entries(mapUser).forEach(([key, value]) => {
       setValue(key, value);
     });
     dispatch(setHasRun(true));
-  }
+  };
   const handleCheckCharging = () => {
     const items = [
       ...userData?.customer,
@@ -188,7 +193,9 @@ const UserModal = () => {
     ];
 
     const matched = items?.every((charge) =>
-      chargingData?.some((charging) => charging?.code === charge?.charging_code)
+      chargingData?.some(
+        (charging) => charging?.code === charge?.charging_code,
+      ),
     );
 
     return matched;
@@ -245,7 +252,7 @@ const UserModal = () => {
 
         dispatch(setChargingData(res?.data?.result || []));
       }
-    } catch (error) { }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -264,8 +271,7 @@ const UserModal = () => {
         running.current = true;
         chargingNoPagination();
         running.current = false;
-      } else if (userData?.status === "Pending") return
-
+      } else if (userData?.status === "Pending") return;
       else {
         multipleFetch(
           userData?.customer,
@@ -273,7 +279,7 @@ const UserModal = () => {
           searchCharging,
           "charging_code",
           setChargingData,
-          running
+          running,
         );
       }
 
@@ -283,9 +289,9 @@ const UserModal = () => {
 
   useEffect(() => {
     if (userData?.status === "Pending" && sedarData) {
-      mapAddPendingForm()
-    }
-    else if (sedarData &&
+      mapAddPendingForm();
+    } else if (
+      sedarData &&
       chargingData &&
       userData !== null &&
       userModal &&
@@ -326,9 +332,9 @@ const UserModal = () => {
       </DialogTitle>
 
       {!loadingCharging &&
-        !loadingRoles &&
-        !loadingSedar &&
-        !running.current ? (
+      !loadingRoles &&
+      !loadingSedar &&
+      !running.current ? (
         <form onSubmit={handleSubmit(submitHandler)}>
           <DialogContent>
             <Stack gap={0.5}>
@@ -409,7 +415,7 @@ const UserModal = () => {
                 }
                 scrollChange={(e) =>
                   handleScroll(e, () =>
-                    onSelectPageRoles(paramsRoles?.page + 1)
+                    onSelectPageRoles(paramsRoles?.page + 1),
                   )
                 }
                 onKeyUp={(e) => {
@@ -541,7 +547,9 @@ const UserModal = () => {
                 size="small"
                 color="success"
               >
-                {(userData === null || userData?.status === "Pending") ? "Submit" : "Update"}
+                {userData === null || userData?.status === "Pending"
+                  ? "Submit"
+                  : "Update"}
               </Button>
               <Button
                 className="change-password-button"
