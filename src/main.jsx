@@ -11,7 +11,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Provider store={store}>
-      <BrowserRouter basename="/pretest_m&s">
+      <BrowserRouter basename="/m&s">
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <App />
         </LocalizationProvider>
