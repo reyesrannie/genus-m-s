@@ -11,7 +11,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <Provider store={store}>
-      <BrowserRouter basename="/m&s">
+      <BrowserRouter basename="/feedmill">
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <App />
         </LocalizationProvider>

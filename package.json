@@ -1,7 +1,7 @@
 {
   "name": "genus-mns",
   "private": true,
-  "homepage": "/m&s",
+  "homepage": "/feedmill",
   "version": "2.0.0",
   "type": "module",
   "scripts": {

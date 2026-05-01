@@ -20,7 +20,7 @@ const MobileNavigation = () => {
 
   const fileredNavigation = filterNavigationByAccess(
     navigation,
-    userData?.role?.access_permission
+    userData?.role?.access_permission,
   );
 
   const paperRef = useRef(null);
@@ -29,24 +29,23 @@ const MobileNavigation = () => {
 
   return (
     <Paper
+      sx={{ position: "fixed", bottom: 0, overflow: "auto", width: "100%" }}
       ref={paperRef}
       elevation={3}
-      sx={{ width: "100%", flexWrap: "wrap", p: 1 }}
     >
       <BottomNavigation
         showLabels
         value={`/${currentPath}`}
         sx={{
-          flexWrap: "wrap",
-          display: "flex",
-          justifyContent: "center",
+          width: "100%",
+          justifyContent: "start",
           m: 1,
         }}
       >
         {fileredNavigation?.map((route, index) => (
           <BottomNavigationAction
             key={route.route || index}
-            label={route.title}
+            label={route.route === `/${currentPath}` ? route.title : ""}
             icon={route.icon}
             value={route.route}
             onClick={() => {
